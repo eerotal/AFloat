@@ -15,10 +15,8 @@ typedef union {
 	void *p;
 } AITEM;
 
-AITEM *array_put(AITEM *ptr, const AITEM *new_elem,
-		const size_t old_len);
-AITEM *array_pop(AITEM *ptr, const size_t index,
-		const size_t old_len);
+AITEM *array_put(AITEM *ptr, const AITEM *new_elem, const size_t len);
+AITEM *array_pop(AITEM *ptr, const size_t index, const size_t len);
 AITEM *array_pad(AITEM *ptr, const size_t old_len,
 		const size_t new_len, const AITEM *filler,
 		const int where);

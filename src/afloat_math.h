@@ -3,6 +3,6 @@
 
 #include "afloat.h"
 
-AFLOAT *add(AFLOAT *a, const AFLOAT *b);
+AFLOAT *afloat_sum(AFLOAT *a, const AFLOAT *b);
 
 #endif

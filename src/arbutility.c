@@ -9,6 +9,7 @@ int main(int argc, const char **argv) {
 
 	AFLOAT *test1 = afloat_define();
 	AFLOAT *test2 = afloat_define();
+	AFLOAT *test_sum = NULL;
 
 	afloat_setd_str("1234567890", test1);
 	printf("test1: ");
@@ -19,11 +20,11 @@ int main(int argc, const char **argv) {
 	printf("test2: ");
 	afloat_print(test2);
 	printf("\n");
-	afloat_pad(test2, test1);
-	printf("test2: ");
-	afloat_print(test2);
-	printf("\n");
 
+	test_sum = afloat_sum(test1, test2);
+	printf("test_sum: ");
+	afloat_print(test_sum);
+	printf("\n");
 
 	afloat_dump_all();
 	afloat_free_all();

@@ -10,8 +10,10 @@ static unsigned int afloats_len = 0;
 static AITEM *afloats = NULL;
 
 void afloat_print(const AFLOAT *ptr) {
-	for (size_t i = 0; i < ptr->d_len; i++) {
-		printf("%i", ptr->d[i].c);
+	if (ptr) {
+		for (size_t i = 0; i < ptr->d_len; i++) {
+			printf("%i", ptr->d[i].c);
+		}
 	}
 }
 

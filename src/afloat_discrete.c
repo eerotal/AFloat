@@ -7,7 +7,7 @@
 
 int afloat_pad(AFLOAT *a, AFLOAT *b) {
 	/*
-	*  Pad the AFLOAT values a and be so that they
+	*  Pad the AFLOAT values 'a' and 'b' so that they
 	*  are equal in length. The padding is done by adding
 	*  leading zeroes to the AFLOAT digit arrays.
 	*/
