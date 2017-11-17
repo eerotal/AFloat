@@ -4,6 +4,7 @@
 
 #include "array.h"
 #include "afloat_discrete.h"
+#include "aerror.h"
 
 int afloat_pad(AFLOAT *a, AFLOAT *b) {
 	/*
@@ -13,32 +14,24 @@ int afloat_pad(AFLOAT *a, AFLOAT *b) {
 	*/
 
 	AITEM filler;
-	AITEM *tmp = NULL;
-
 	filler.c = 0;
 
-	if (!a->d || !b->d) {
-		return -1;
+	if (!a || !b || !a->d->elems || !b->d->elems) {
+		return AERROR_INVALID_ARGS;
 	}
 
-	if (a->d_len == b->d_len) {
-		return 1;
-	} else if (a->d_len > b->d_len) {
-		tmp = array_pad(b->d, b->d_len, a->d_len, &filler, -1);
-		if (tmp) {
-			b->d = tmp;
-			b->d_len = a->d_len;
-			return 1;
+	if (a->d->len == b->d->len) {
+		return AERROR_OK;
+	} else if (a->d->len > b->d->len) {
+		if (array_pad(b->d, a->d->len, &filler, -1)) {
+			return AERROR_OK;
 		}
 	} else {
-		tmp = array_pad(a->d, a->d_len, b->d_len, &filler, -1);
-		if (tmp) {
-			a->d = tmp;
-			a->d_len = b->d_len;
-			return 1;
+		if (array_pad(a->d, b->d->len, &filler, -1)) {
+			return AERROR_OK;
 		}
 	}
-	return -1;
+	return AERROR_INTERNAL;
 }
 
 AFLOAT *afloat_dup(const AFLOAT *ptr) {
@@ -51,37 +44,40 @@ AFLOAT *afloat_dup(const AFLOAT *ptr) {
 	tmp->sign = ptr->sign;
 
 	if (ptr->d) {
-		tmp->d = malloc(ptr->d_len*sizeof(*ptr->d));
-		if (!tmp->d) {
+		tmp->d->elems = malloc(ptr->d->len*sizeof(*ptr->d->elems));
+		if (!tmp->d->elems) {
 			afloat_free(tmp);
 			return NULL;
 		}
-		tmp->d_len = ptr->d_len;
+		tmp->d->len = ptr->d->len;
 
-		memcpy(tmp->d, ptr->d, ptr->d_len*sizeof(*ptr->d));
+		memcpy(tmp->d->elems, ptr->d->elems,
+			ptr->d->len*sizeof(*ptr->d->elems));
 	} else {
-		tmp->d = NULL;
-		tmp->d_len = 0;
+		tmp->d->elems = NULL;
+		tmp->d->len = 0;
 	}
 	return tmp;
 
 }
 
-AFLOAT *afloat_reverse(const AFLOAT *ptr) {
-	/*
-	*  Return an AFLOAT instance with the digits of
-	*  'ptr' reversed or NULL on failure.
-	*/
-
-	AFLOAT *rev = NULL;
-	if (!ptr->d) {
-		return NULL;
+int afloat_reverse(AFLOAT *ptr) {
+	AITEM *rev = NULL;
+	if (!ptr || !ptr->d->elems || !ptr->d->len) {
+		return AERROR_INVALID_ARGS;
 	}
 
-	rev = afloat_dup(ptr);
-	for (size_t i = 0; i < ptr->d_len; i++) {
-		rev->d[i] = ptr->d[ptr->d_len - 1 - i];
+	rev = calloc(ptr->d->len, sizeof(*ptr->d->elems));
+	if (!rev) {
+		return AERROR_MEMORY;
 	}
 
-	return rev;
+	size_t i = ptr->d->len;
+	while(i--) {
+		rev[ptr->d->len - 1 - i].c = ptr->d->elems[i].c;
+	}
+
+	free(ptr->d->elems);
+	ptr->d->elems = rev;
+	return AERROR_OK;
 }

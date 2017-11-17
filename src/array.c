@@ -6,23 +6,8 @@
 
 #include "array.h"
 
-AITEM *array_set(AITEM *ptr, const void *elems,
-		const size_t len, int typ) {
-	/*
-	*  Copy the elements of the traditional C-style array
-	*  'elems' into the AITEM array 'ptr'. 'len' is the length
-	*  of the original array and 'typ' should be one of the AITEM_*
-	*  constants defined in array.h. The 'typ' argument is used
-	*  to tell this function the data type that the original array
-	*  contains. Returns an AITEM array pointer on success or NULL
-	*  on failure.
-	*/
-
-	AITEM *tmp_arr = NULL;
-	AITEM *arr = NULL;
-	size_t arr_len = 0;
+int array_set(ARR *ptr, const void *elems, const size_t len, int typ) {
 	AITEM tmp;
-
 	for (size_t i = 0; i < len; i++) {
 		memset(&tmp, 0, sizeof(tmp));
 		switch(typ) {
@@ -44,131 +29,100 @@ AITEM *array_set(AITEM *ptr, const void *elems,
 			default:
 				break;
 		}
-		tmp_arr = array_put(arr, &tmp, arr_len);
-		if (!tmp_arr) {
-			if (arr) {
-				free(arr);
-			}
-			return NULL;
+		if (!array_put(ptr, &tmp)) {
+			return -1;
 		}
-		arr = tmp_arr;
-		arr_len++;
 	}
-	return arr;
+	return 1;
 }
 
-AITEM *array_put(AITEM *ptr, const AITEM *new_elem,
-		const size_t len) {
+int array_put(ARR *ptr, const AITEM *new_elem) {
 	/*
-	*  Append the element 'new_elem' to the AITEM array 'ptr'.
-	*  'len' is the current length of the AITEM array.
-	*  Returns a pointer to a new AITEM array on success or
-	*  NULL on failure.
+	*  Append the element 'new_elem' to the array 'ptr'.
 	*/
-
 	AITEM *tmp = NULL;
-
-	printf("Array: put *(0x%x) --> *(0x%x)(start).\n",
-		(unsigned int) new_elem,
-		(unsigned int) ptr);
-
-	tmp = realloc(ptr, (len + 1)*sizeof(*new_elem));
+	tmp = realloc(ptr->elems, (ptr->len + 1)*sizeof(*new_elem));
 	if (!tmp) {
-		return NULL;
+		return -1;
 	}
-
-	printf("Array: realloc'd %zu bytes @ 0x%x.\n",
-		(len + 1)*sizeof(new_elem),
-		(unsigned int) tmp);
+	ptr->elems = tmp;
+	ptr->len++;
 
 	if (new_elem) {
-		memcpy(tmp + len, new_elem, sizeof(*new_elem));
+		memcpy(ptr->elems + ptr->len - 1, new_elem,
+			sizeof(*new_elem));
 	} else {
-		memset(tmp + len, 0, sizeof(*new_elem));
+		memset(ptr->elems + ptr->len - 1, 0, sizeof(*new_elem));
 	}
-	return tmp;
+	return 1;
 }
 
-AITEM *array_pop(AITEM *ptr, const size_t index,
-		const size_t len) {
-	/*
-	*  Remove the item at 'index' in the AITEM array 'ptr'.
-	*  'len' is the current length of the array. Returns a
-	*  new AITEM array pointer on success or NULL on failure.
-	*/
-
+int array_pop(ARR *ptr, const size_t index) {
 	AITEM *tmp = NULL;
 	size_t tmp_index = 0;
 
-	if (!ptr || !len) {
-		return NULL;
+	if (!ptr) {
+		return -1;
 	}
 
-	tmp = malloc((len - 1)*sizeof(AITEM));
+	tmp = malloc((ptr->len - 1)*sizeof(AITEM));
 	if (!tmp) {
-		return NULL;
+		return -1;
 	}
 
-	for (size_t i = 0; i < len; i++) {
+	for (size_t i = 0; i < ptr->len; i++) {
 		if (i != index) {
-			memcpy(tmp + tmp_index, ptr + i,
+			memcpy(tmp + tmp_index, ptr->elems + i,
 				sizeof(AITEM));
 			tmp_index++;
 		}
 	}
-	free(ptr);
-	return tmp;
+	free(ptr->elems);
+	ptr->elems = tmp;
+	ptr->len--;
+	return 1;
 }
 
-AITEM *array_pad(AITEM *ptr, const size_t old_len,
-		const size_t new_len, const AITEM *filler,
-		const int where) {
-	/*
-	*  Pad the AITEM array 'ptr' with 'filler' so that the new
-	*  length of the array is equal to 'new_len'. 'old_len' is
-	*  the length of the array before this operation is done.
-	*  'where' is used to specify where to append 'filler'. -1
-	*  appends 'filler' at the beginning of the array and 1 at
-	*  the end of the array. Returns a pointer to a new AITEM
-	*  array on success or a NULL pointer on failure.
-	*/
-
+int array_pad(ARR *ptr, const size_t new_len,
+		const AITEM *filler, const int where) {
 	AITEM *tmp = NULL;
 
 	if (!ptr) {
-		return NULL;
+		return -1;
 	}
 
-	if (old_len > new_len) {
-		return NULL;
+	if (ptr->len > new_len) {
+		return -1;
 	}
 
-	if (old_len == new_len) {
-		return ptr;
+	if (ptr->len == new_len) {
+		return 1;
 	}
 
-	tmp = malloc(new_len*sizeof(*ptr));
+	tmp = malloc(new_len*sizeof(*ptr->elems));
 	if (!tmp) {
-		return NULL;
+		return -1;
 	}
 
 	if (where == -1) {
-		memcpy(tmp + new_len - old_len, ptr,
-			old_len*sizeof(*ptr));
-		for (size_t i = 0; i <= new_len - old_len - 1; i++) {
+		memcpy(tmp + new_len - ptr->len, ptr->elems,
+			ptr->len*sizeof(*ptr->elems));
+		for (size_t i = 0; i <= new_len - ptr->len - 1; i++) {
 			memcpy(tmp + i, filler, sizeof(*filler));
 		}
 	} else if (where == 1) {
-		memcpy(tmp, ptr, old_len*sizeof(*ptr));
-		for (size_t i = 0; i <= new_len - old_len - 1; i++) {
-			memcpy(tmp + old_len + i, filler,
+		memcpy(tmp, ptr->elems, ptr->len*sizeof(*ptr->elems));
+		for (size_t i = 0; i <= new_len - ptr->len - 1; i++) {
+			memcpy(tmp + ptr->len + i, filler,
 				sizeof(*filler));
 		}
 	} else {
 		free(tmp);
-		return NULL;
+		return -1;
 	}
 
-	free(ptr);
-	return tmp;
+	free(ptr->elems);
+	ptr->elems = tmp;
+	ptr->len = new_len;
+	return 1;
 }

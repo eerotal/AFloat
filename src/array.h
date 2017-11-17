@@ -15,12 +15,17 @@ typedef union {
 	void *p;
 } AITEM;
 
-AITEM *array_put(AITEM *ptr, const AITEM *new_elem, const size_t len);
-AITEM *array_pop(AITEM *ptr, const size_t index, const size_t len);
-AITEM *array_pad(AITEM *ptr, const size_t old_len,
-		const size_t new_len, const AITEM *filler,
-		const int where);
-AITEM *array_set(AITEM *ptr, const void *elems,
-		const size_t len, int typ);
+
+typedef struct {
+	AITEM *elems;
+	size_t len;
+	int typ;
+} ARR;
+
+int array_put(ARR *ptr, const AITEM *new_elem);
+int array_pop(ARR *ptr, const size_t index);
+int array_pad(ARR *ptr, const size_t new_len,
+		const AITEM *filler, const int where);
+int array_set(ARR *ptr, const void *elems, const size_t len, int typ);
 
 #endif

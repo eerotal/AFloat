@@ -5,19 +5,31 @@
 
 #include "array.h"
 #include "afloat.h"
+#include "aerror.h"
 
-static unsigned int afloats_len = 0;
-static AITEM *afloats = NULL;
+static ARR *afloats = NULL;
+
+void afloat_init(void) {
+	afloats = calloc(1, sizeof(ARR));
+}
+
+void afloat_destroy(void) {
+	if (afloats) {
+		afloat_free_all();
+		free(afloats);
+		afloats = NULL;
+	}
+}
 
 void afloat_print(const AFLOAT *ptr) {
 	if (ptr) {
-		for (size_t i = 0; i < ptr->d_len; i++) {
-			printf("%i", ptr->d[i].c);
+		for (size_t i = 0; i < ptr->d->len; i++) {
+			printf("%i", ptr->d->elems[i].c);
 		}
 	}
 }
 
-AITEM *afloat_getd(const AFLOAT *ptr) {
+ARR *afloat_getd(const AFLOAT *ptr) {
 	/*
 	*  Get AFLOAT digit array.
 	*/
@@ -28,7 +40,7 @@ size_t afloat_getd_len(const AFLOAT *ptr) {
 	/*
 	*  Get AFLOAT digit count.
 	*/
-	return ptr->d_len;
+	return ptr->d->len;
 }
 
 int afloat_setd_str(char *digits, AFLOAT *ptr) {
@@ -38,7 +50,7 @@ int afloat_setd_str(char *digits, AFLOAT *ptr) {
 	*/
 	char *tmp_str = strdup(digits);
 	if (!tmp_str) {
-		return -1;
+		return AERROR_MEMORY;
 	}
 	for (size_t i = 0; i < strlen(tmp_str); i++) {
 		/*
@@ -49,7 +61,7 @@ int afloat_setd_str(char *digits, AFLOAT *ptr) {
 	}
 	afloat_setd(tmp_str, strlen(tmp_str), ptr);
 	free(tmp_str);
-	return 1;
+	return AERROR_OK;
 }
 
 int afloat_setd(char *digits, size_t len, AFLOAT *ptr) {
@@ -57,20 +69,15 @@ int afloat_setd(char *digits, size_t len, AFLOAT *ptr) {
 	*  Copy the digits from the 'digits' array into
 	*  the AFLOAT 'ptr'.
 	*/
-	AITEM *arr = NULL;
 	if (!digits) {
 		afloat_cleard(ptr);
-		return 1;
+		return AERROR_OK;
 	}
 
-	arr = array_set(ptr->d, digits, len, AITEM_CHAR);
-	if (!arr) {
-		return -1;
+	if (!array_set(ptr->d, digits, len, AITEM_CHAR)) {
+		return AERROR_INTERNAL;
 	}
-	ptr->d = arr;
-	ptr->d_len = len;
-
-	return 1;
+	return AERROR_OK;
 }
 
 void afloat_cleard(AFLOAT *ptr) {
@@ -80,7 +87,7 @@ void afloat_cleard(AFLOAT *ptr) {
 	if (ptr->d) {
 		free(ptr->d);
 		ptr->d = NULL;
-		ptr->d_len = 0;
+		ptr->d->len = 0;
 	}
 }
 
@@ -88,40 +95,28 @@ static int _afloat_reg(AFLOAT *ptr) {
 	/*
 	*  Register an AFLOAT instance.
 	*/
-	AITEM *ret = NULL;
 	AITEM tmp;
 
 	tmp.p = (void*) ptr;
-
-	ret = array_put(afloats, &tmp, afloats_len);
-	if (!ret) {
-		return -1;
+	if (!array_put(afloats, &tmp)) {
+		return AERROR_INTERNAL;
 	}
-	afloats = ret;
-	afloats_len++;
 	printf("AFLOAT reg'd (0x%x)\n", (unsigned int) ptr);
 
-	return 1;
+	return AERROR_OK;
 }
 
 static int _afloat_unreg(AFLOAT *ptr) {
 	/*
 	*  Unregister an AFLOAT instance.
 	*/
-	AITEM *ret = NULL;
-	for (size_t i = 0; i < afloats_len; i++) {
-		if ((AFLOAT*) afloats[i].p == ptr) {
-			ret = array_pop(afloats, i, afloats_len);
-			if (!ret) {
-				return -1;
-			}
-
-			afloats = ret;
-			afloats_len--;
-			return 1;
+	for (size_t i = 0; i < afloats->len; i++) {
+		if ((AFLOAT*) afloats->elems[i].p == ptr) {
+			array_pop(afloats, i);
+			return AERROR_OK;
 		}
 	}
-	return -1;
+	return AERROR_INVALID_ARGS;
 }
 
 AFLOAT *afloat_define(void) {
@@ -130,8 +125,10 @@ AFLOAT *afloat_define(void) {
 	*  to an AFLOAT instance on success and NULL on failure.
 	*/
 	AFLOAT *ptr = calloc(1, sizeof(AFLOAT));
-	printf("AFLOAT calloc'd (0x%x)\n", (unsigned int) ptr);
-	if (!_afloat_reg(ptr)) {
+	ptr->d = calloc(1, sizeof(ARR));
+
+	printf("AFLOAT allocated (0x%x)\n", (unsigned int) ptr);
+	if (!AERROR_CHKP(_afloat_reg(ptr))) {
 		printf("Failed to register AFLOAT instance.\n");
 		free(ptr);
 		return NULL;
@@ -144,8 +141,8 @@ void afloat_dump_all(void) {
 	*  Dump the pointer hex codes of all registered AFLOATs.
 	*/
 	printf("AFLOAT Dump:\n");
-	for (size_t i = 0; i < afloats_len; i++) {
-		printf("\t%i: 0x%x\n", i, afloats[i].i);
+	for (size_t i = 0; i < afloats->len; i++) {
+		printf("\t%i: 0x%x\n", i, afloats->elems[i].i);
 	}
 }
 
@@ -155,7 +152,7 @@ void afloat_free(AFLOAT *ptr) {
 			free(ptr->d);
 			ptr->d = NULL;
 		}
-		if (!_afloat_unreg(ptr)) {
+		if (!AERROR_CHKP(_afloat_unreg(ptr))) {
 			printf("AFLOAT unreg failed!\n");
 		}
 		free(ptr);
@@ -167,8 +164,9 @@ void afloat_free_all(void) {
 	*  Free all registered AFLOATs.
 	*/
 	printf("AFLOAT free all!\n");
-	while (afloats_len) {
-		printf("AFLOAT free: 0x%x\n", afloats[0].i);
-		afloat_free((AFLOAT*) afloats[0].p);
+	while (afloats->len) {
+		printf("AFLOAT free: 0x%x\n", afloats->elems[0].i);
+		afloat_free((AFLOAT*) afloats->elems[0].p);
 	}
 }
+

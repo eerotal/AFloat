@@ -7,6 +7,8 @@
 int main(int argc, const char **argv) {
 	printf("ArbFloat test utility.\n");
 
+	afloat_init();
+
 	AFLOAT *test1 = afloat_define();
 	AFLOAT *test2 = afloat_define();
 	AFLOAT *test_sum = NULL;
@@ -27,5 +29,5 @@ int main(int argc, const char **argv) {
 	printf("\n");
 
 	afloat_dump_all();
-	afloat_free_all();
+	afloat_destroy();
 }

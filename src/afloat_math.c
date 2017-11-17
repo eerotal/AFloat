@@ -2,74 +2,60 @@
 
 #include "afloat_discrete.h"
 #include "afloat_math.h"
-
-int _afloat_sum__add_digit(unsigned int d, AFLOAT *sum) {
-	AITEM digit;
-	AITEM *tmp_digits = NULL;
-
-	digit.c = d;
-	tmp_digits = array_put(sum->d, &digit, sum->d_len);
-	if (!tmp_digits) {
-		return -1;
-	}
-	sum->d = tmp_digits;
-	sum->d_len++;
-	return 1;
-}
+#include "aerror.h"
 
 AFLOAT *afloat_sum(AFLOAT *a, const AFLOAT *b) {
+	int err = AERROR_OK;
 	int s = 0;
 	int carry = 0;
+
+	AITEM d;
 	AFLOAT *sum = afloat_define();
-	AFLOAT *tmp_sum = NULL;
-	AFLOAT *a_rev = NULL;
-	AFLOAT *b_rev = NULL;
-	AFLOAT *a_pad = afloat_dup(a);
-	AFLOAT *b_pad = afloat_dup(b);
+	AFLOAT *a_tmp = afloat_dup(a);
+	AFLOAT *b_tmp = afloat_dup(b);
 
-	if (!a_pad || !b_pad) {
+	if (!a_tmp || !b_tmp) {
 		return NULL;
 	}
 
-	if (!afloat_pad(a_pad, b_pad)) {
-		afloat_free(a_pad);
-		afloat_free(b_pad);
+	AERROR_FLGP(afloat_pad(a_tmp, b_tmp), err);
+	AERROR_FLGP(afloat_reverse(a_tmp), err);
+	AERROR_FLGP(afloat_reverse(b_tmp), err);
+
+	if (!AERROR_CHKFLG(err)) {
+		aerror_printerr("Math operation(s) failed!");
+		afloat_free(a_tmp);
+		afloat_free(b_tmp);
 		return NULL;
 	}
 
-	a_rev = afloat_reverse(a_pad);
-	b_rev = afloat_reverse(b_pad);
-
-	afloat_free(a_pad);
-	afloat_free(b_pad);
-
-	if (!a_rev || !b_rev) {
-		return NULL;
-	}
-
-	for (size_t i = 0; i < a_rev->d_len; i++) {
-		s = a_rev->d[i].c + b_rev->d[i].c;
-		if (!_afloat_sum__add_digit((s % 10) + carry, sum)) {
-			afloat_free(a_rev);
-			afloat_free(b_rev);
+	for (size_t i = 0; i < a_tmp->d->len; i++) {
+		s = a_tmp->d->elems[i].c + b_tmp->d->elems[i].c;
+		d.c = (s % 10) + carry;
+		if (!array_put(sum->d, &d)) {
+			afloat_free(a_tmp);
+			afloat_free(b_tmp);
 			afloat_free(sum);
 			return NULL;
 
 		}
 		carry = (s - s % 10)/10;
 	}
+	afloat_free(a_tmp);
+	afloat_free(b_tmp);
+
 	if (carry) {
-		_afloat_sum__add_digit(carry, sum);
-		afloat_free(a_rev);
-		afloat_free(b_rev);
-		afloat_free(sum);
+		d.c = (s % 10) + carry;
+		if (!array_put(sum->d, &d)) {
+			afloat_free(sum);
 			return NULL;
+		}
 	}
 
-	tmp_sum = afloat_reverse(sum);
+	if (!AERROR_CHKP(afloat_reverse(sum))) {
+		afloat_free(sum);
+		return NULL;
+	}
 
-	afloat_free(a_rev);
-	afloat_free(b_rev);
-	afloat_free(sum);
-	return tmp_sum;
+	return sum;
 }
