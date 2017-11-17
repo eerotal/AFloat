@@ -6,6 +6,7 @@
 #include "array.h"
 #include "afloat.h"
 #include "aerror.h"
+#include "alog.h"
 
 static ARR *afloats = NULL;
 
@@ -101,7 +102,7 @@ static int _afloat_reg(AFLOAT *ptr) {
 	if (!array_put(afloats, &tmp)) {
 		return AERROR_INTERNAL;
 	}
-	printf("AFLOAT reg'd (0x%x)\n", (unsigned int) ptr);
+	alog_printvv("AFLOAT reg'd (0x%x)", (unsigned int) ptr);
 
 	return AERROR_OK;
 }
@@ -127,9 +128,9 @@ AFLOAT *afloat_define(void) {
 	AFLOAT *ptr = calloc(1, sizeof(AFLOAT));
 	ptr->d = calloc(1, sizeof(ARR));
 
-	printf("AFLOAT allocated (0x%x)\n", (unsigned int) ptr);
+	alog_printvv("allocated (0x%x)", (unsigned int) ptr);
 	if (!AERROR_CHKP(_afloat_reg(ptr))) {
-		printf("Failed to register AFLOAT instance.\n");
+		aerror_printerr("Failed to register AFLOAT instance.");
 		free(ptr);
 		return NULL;
 	}
@@ -140,9 +141,10 @@ void afloat_dump_all(void) {
 	/*
 	*  Dump the pointer hex codes of all registered AFLOATs.
 	*/
-	printf("AFLOAT Dump:\n");
+	alog_printv("AFLOAT Dump:");
 	for (size_t i = 0; i < afloats->len; i++) {
-		printf("\t%i: 0x%x\n", i, afloats->elems[i].i);
+		alog_printv("\t%i: 0x%x", i, afloats->elems[i].i);
+
 	}
 }
 
@@ -153,7 +155,7 @@ void afloat_free(AFLOAT *ptr) {
 			ptr->d = NULL;
 		}
 		if (!AERROR_CHKP(_afloat_unreg(ptr))) {
-			printf("AFLOAT unreg failed!\n");
+			aerror_printerr("AFLOAT unreg failed!");
 		}
 		free(ptr);
 	}
@@ -163,9 +165,9 @@ void afloat_free_all(void) {
 	/*
 	*  Free all registered AFLOATs.
 	*/
-	printf("AFLOAT free all!\n");
+	alog_printv("AFLOAT free all!");
 	while (afloats->len) {
-		printf("AFLOAT free: 0x%x\n", afloats->elems[0].i);
+		alog_printvv("AFLOAT free: 0x%x", afloats->elems[0].i);
 		afloat_free((AFLOAT*) afloats->elems[0].p);
 	}
 }

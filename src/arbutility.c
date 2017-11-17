@@ -3,9 +3,12 @@
 #include "afloat.h"
 #include "afloat_discrete.h"
 #include "afloat_math.h"
+#include "alog.h"
 
 int main(int argc, const char **argv) {
 	printf("ArbFloat test utility.\n");
+
+	alog_set_verbose(2);
 
 	afloat_init();
 
@@ -30,4 +33,5 @@ int main(int argc, const char **argv) {
 
 	afloat_dump_all();
 	afloat_destroy();
+
 }
