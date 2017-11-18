@@ -24,6 +24,11 @@ void afloat_destroy(void) {
 
 void afloat_print(const AFLOAT *ptr) {
 	if (ptr) {
+		if (ptr->sgn == AFLOAT_SGN_NEG) {
+			printf("-");
+		} else {
+			printf("+");
+		}
 		for (size_t i = 0; i < ptr->d->len; i++) {
 			printf("%i", ptr->d->elems[i].c);
 		}
@@ -44,28 +49,60 @@ size_t afloat_getd_len(const AFLOAT *ptr) {
 	return ptr->d->len;
 }
 
-int afloat_setd_str(char *digits, AFLOAT *ptr) {
+int afloat_setd_str(AFLOAT *ptr, char *digits) {
 	/*
 	*  Copy the characters from the 'digits' string
-	*  into the AFLOAT 'ptr'.
+	*  into the AFLOAT 'ptr'. The first character in
+	*  'digits' can be '-' or '+' signifying the sign
+	*  of the number. If no sign is specified, a
+	*  positive number is created.
 	*/
+	size_t str_start = 0;
 	char *tmp_str = strdup(digits);
+	int sgn = 0;
+
 	if (!tmp_str) {
 		return AERROR_MEMORY;
 	}
-	for (size_t i = 0; i < strlen(tmp_str); i++) {
+
+	if (digits[0] == '-') {
+		if (strlen(digits) == 1) {
+			return AERROR_INVALID_ARGS;
+		}
+		sgn = AFLOAT_SGN_NEG;
+		str_start = 1;
+	} else if (digits[0] == '+') {
+		if (strlen(digits) == 1) {
+			return AERROR_INVALID_ARGS;
+		}
+		sgn = AFLOAT_SGN_POS;
+		str_start = 1;
+	} else {
+		sgn = AFLOAT_SGN_POS;
+	}
+
+	for (size_t i = str_start; i < strlen(tmp_str); i++) {
 		/*
 		* A simple way of converting numerical characters
 		* to integer values from 0-9.
 		*/
+		if (tmp_str[i] < 0x30 || tmp_str[i] > 0x39) {
+			free(tmp_str);
+			return AERROR_INVALID_ARGS;
+		}
 		tmp_str[i] -= 0x30;
 	}
-	afloat_setd(tmp_str, strlen(tmp_str), ptr);
+	if (!AERROR_CHKP(afloat_setd(ptr, tmp_str + str_start,
+		strlen(tmp_str) - str_start, sgn))) {
+
+		free(tmp_str);
+		return AERROR_INTERNAL;
+	}
 	free(tmp_str);
 	return AERROR_OK;
 }
 
-int afloat_setd(char *digits, size_t len, AFLOAT *ptr) {
+int afloat_setd(AFLOAT *ptr, char *digits, size_t len, int sgn) {
 	/*
 	*  Copy the digits from the 'digits' array into
 	*  the AFLOAT 'ptr'.
@@ -78,6 +115,8 @@ int afloat_setd(char *digits, size_t len, AFLOAT *ptr) {
 	if (!array_set(ptr->d, digits, len, AITEM_CHAR)) {
 		return AERROR_INTERNAL;
 	}
+	ptr->sgn = sgn;
+
 	return AERROR_OK;
 }
 
@@ -89,6 +128,7 @@ void afloat_cleard(AFLOAT *ptr) {
 		free(ptr->d);
 		ptr->d = NULL;
 		ptr->d->len = 0;
+		ptr->sgn = 0;
 	}
 }
 

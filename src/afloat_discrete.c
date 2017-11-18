@@ -41,7 +41,7 @@ AFLOAT *afloat_dup(const AFLOAT *ptr) {
 	*/
 	AFLOAT *tmp = NULL;
 	tmp = afloat_define();
-	tmp->sign = ptr->sign;
+	tmp->sgn = ptr->sgn;
 
 	if (ptr->d) {
 		tmp->d->elems = malloc(ptr->d->len*sizeof(*ptr->d->elems));

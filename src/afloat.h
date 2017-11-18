@@ -6,13 +6,11 @@
 
 #include "array.h"
 
-#define AFLOAT_ERR_ACC(f, v_err)  v_err -= (!f ? 1 : 0);
-
-#define AFLOAT_SIGN_NEG 0
-#define AFLOAT_SIGN_POS 1
+#define AFLOAT_SGN_NEG -1
+#define AFLOAT_SGN_POS 1
 
 typedef struct {
-	char sign;
+	int sgn;
 	ARR *d;
 } AFLOAT;
 
@@ -21,8 +19,8 @@ void afloat_destroy(void);
 void afloat_print(const AFLOAT *ptr);
 ARR *afloat_getd(const AFLOAT *ptr);
 size_t afloat_getd_len(const AFLOAT *ptr);
-int afloat_setd_str(char *digits, AFLOAT *ptr);
-int afloat_setd(char *digits, size_t len, AFLOAT *ptr);
+int afloat_setd_str(AFLOAT *ptr, char *digits);
+int afloat_setd(AFLOAT *ptr, char *digits, size_t len, int sgn);
 void afloat_cleard(AFLOAT *ptr);
 AFLOAT *afloat_define(void);
 void afloat_dump_all(void);
