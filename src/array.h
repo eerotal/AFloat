@@ -22,6 +22,7 @@ typedef struct {
 	int typ;
 } ARR;
 
+AITEM *array_get(ARR *ptr, size_t index);
 int array_put(ARR *ptr, const AITEM *new_elem);
 int array_pop(ARR *ptr, const size_t index);
 int array_pad(ARR *ptr, const size_t new_len,

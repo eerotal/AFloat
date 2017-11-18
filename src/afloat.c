@@ -102,7 +102,7 @@ static int _afloat_reg(AFLOAT *ptr) {
 	if (!array_put(afloats, &tmp)) {
 		return AERROR_INTERNAL;
 	}
-	alog_printvv("AFLOAT reg'd (0x%x)", (unsigned int) ptr);
+	alog_printvv("AFloat reg'd @ (0x%x)", (unsigned int) ptr);
 
 	return AERROR_OK;
 }
@@ -128,7 +128,7 @@ AFLOAT *afloat_define(void) {
 	AFLOAT *ptr = calloc(1, sizeof(AFLOAT));
 	ptr->d = calloc(1, sizeof(ARR));
 
-	alog_printvv("allocated (0x%x)", (unsigned int) ptr);
+	alog_printvv("AFloat allocated @ (0x%x)", (unsigned int) ptr);
 	if (!AERROR_CHKP(_afloat_reg(ptr))) {
 		aerror_printerr("Failed to register AFLOAT instance.");
 		free(ptr);
@@ -155,7 +155,7 @@ void afloat_free(AFLOAT *ptr) {
 			ptr->d = NULL;
 		}
 		if (!AERROR_CHKP(_afloat_unreg(ptr))) {
-			aerror_printerr("AFLOAT unreg failed!");
+			aerror_printerr("AFloat unreg failed!");
 		}
 		free(ptr);
 	}
@@ -165,9 +165,9 @@ void afloat_free_all(void) {
 	/*
 	*  Free all registered AFLOATs.
 	*/
-	alog_printv("AFLOAT free all!");
+	alog_printv("Free all AFloats!");
 	while (afloats->len) {
-		alog_printvv("AFLOAT free: 0x%x", afloats->elems[0].i);
+		alog_printvv("AFloat free: 0x%x", afloats->elems[0].i);
 		afloat_free((AFLOAT*) afloats->elems[0].p);
 	}
 }

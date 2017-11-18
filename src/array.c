@@ -6,6 +6,10 @@
 
 #include "array.h"
 
+AITEM *array_get(ARR *ptr, size_t index) {
+	return ptr->elems + index;
+}
+
 int array_set(ARR *ptr, const void *elems, const size_t len, int typ) {
 	AITEM tmp;
 	for (size_t i = 0; i < len; i++) {

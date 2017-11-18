@@ -24,38 +24,39 @@ AFLOAT *afloat_sum(AFLOAT *a, const AFLOAT *b) {
 
 	if (!AERROR_CHKFLG(err)) {
 		aerror_printerr("Math operation(s) failed!");
-		afloat_free(a_tmp);
-		afloat_free(b_tmp);
-		return NULL;
+		goto error;
 	}
 
 	for (size_t i = 0; i < a_tmp->d->len; i++) {
-		s = a_tmp->d->elems[i].c + b_tmp->d->elems[i].c;
+		s = array_get(a_tmp->d, i)->c + array_get(b_tmp->d, i)->c;
 		d.c = (s % 10) + carry;
 		if (!array_put(sum->d, &d)) {
-			afloat_free(a_tmp);
-			afloat_free(b_tmp);
-			afloat_free(sum);
-			return NULL;
-
+			aerror_printerr("Array operation failed!");
+			goto error;
 		}
 		carry = (s - s % 10)/10;
 	}
-	afloat_free(a_tmp);
-	afloat_free(b_tmp);
 
 	if (carry) {
 		d.c = (s % 10) + carry;
 		if (!array_put(sum->d, &d)) {
-			afloat_free(sum);
-			return NULL;
+			aerror_printerr("Array operation failed!");
+			goto error;
 		}
 	}
 
 	if (!AERROR_CHKP(afloat_reverse(sum))) {
-		afloat_free(sum);
-		return NULL;
+		goto error;
 	}
 
+	afloat_free(a_tmp);
+	afloat_free(b_tmp);
+
 	return sum;
+
+	error:
+		if (a_tmp) { afloat_free(a_tmp); }
+		if (b_tmp) { afloat_free(b_tmp); }
+		if (sum) { afloat_free(sum); }
+		return NULL;
 }
