@@ -14,6 +14,12 @@ precision floating point numbers that never introduce any errors in
 calculations. These kinds of libraries also exist for C, and this is
 another attempt at writing one.
 
+**NOTE: This library is still VERY much work in progress. In fact it
+is not even compiled as a library yet, which means it can't actually
+be used as a library in other programs. The development of this library
+is at such and early stage that you really shouldn't use this for
+anything yet.**
+
 ## License
 
 This library is licensed under the BSD 3-clause license. The full license
