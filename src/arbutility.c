@@ -16,12 +16,12 @@ int main(int argc, const char **argv) {
 	AFLOAT *test2 = afloat_define();
 	AFLOAT *test_sum = NULL;
 
-	afloat_setd_str(test1, "1234567890");
+	afloat_setd_str(test1, "-1234567890");
 	printf("test1: ");
 	afloat_print(test1);
 	printf("\n");
 
-	afloat_setd_str(test2, "-9876");
+	afloat_setd_str(test2, "9876");
 	printf("test2: ");
 	afloat_print(test2);
 	printf("\n");

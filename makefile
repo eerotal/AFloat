@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-std=gnu11 -pedantic-errors -pedantic -Wall -O -fsanitize=address -static-libasan -g
-NAME=arbfloat
+NAME=afloat
 
 ifndef VERBOSE
 .SILENT:
